@@ -14,6 +14,13 @@ class Organization(models.Model):
     def __str__(self):
         return self.name
 
+# หมวดหมู่ของ
+class Category(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name
 
 # ผู้ยืม
 class Borrower(models.Model):
@@ -36,6 +43,8 @@ class Approver(models.Model):
 # อุปกรณ์ที่สามารถยืมได้
 class Item(models.Model):
     name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='items')
 
     def __str__(self):
         return self.name
@@ -46,6 +55,7 @@ class EquipmentStock(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
+    available = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return f'{self.item.name} at {self.organization.name}'
