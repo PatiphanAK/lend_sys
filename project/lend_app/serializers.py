@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from .models import Organization, Category, Borrower, Approver, Item, EquipmentStock, BorrowRequest, BorrowQueue
 from django.utils import timezone
-
+from django.contrib.auth.models import User, Group
+from django.contrib.auth.hashers import make_password
 
 class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,12 +21,21 @@ class BorrowerSerializer(serializers.ModelSerializer):
         model = Borrower
         fields = '__all__'
 
+    def create(self, validated_data):
+        user = validated_data.pop('user')
+        borrower = Borrower.objects.create(user=user, **validated_data)
+        return borrower
+
 
 class ApproverSerializer(serializers.ModelSerializer):
     class Meta:
         model = Approver
         fields = '__all__'
 
+    def create(self, validated_data):
+        user = validated_data.pop('user')
+        approver = Approver.objects.create(user=user, **validated_data)
+        return approver
 
 class ItemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -71,8 +81,7 @@ class BorrowRequestSerializer(serializers.ModelSerializer):
             )
 
         return attrs
-
-
+   
 class BorrowQueueSerializer(serializers.ModelSerializer):
     class Meta:
         model = BorrowQueue

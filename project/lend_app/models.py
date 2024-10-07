@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 
 # หน่วยงานที่มีอุปกรณ์ให้ยืม
 
@@ -32,25 +32,37 @@ class Category(models.Model):
 
 class Borrower(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    profile_image = models.ImageField(
-        upload_to='profile_images/', null=True, blank=True)
+    profile_image = models.ImageField(upload_to='borrower_images/', null=True, blank=True)
     description = models.TextField(blank=True)
 
     def __str__(self):
-        return self.name
+        return self.user.username
+
+    def save(self, *args, **kwargs):
+        # Add to 'User' model
+        super().save(*args, **kwargs)
+        # Assign user to the 'Borrower' group
+        borrower_group, created = Group.objects.get_or_create(name='Borrower')
+        self.user.groups.add(borrower_group)
 
 
 # ผู้อนุมัติการยืม
+
+
 class Approver(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
-    position = models.CharField()
-    profile_image = models.ImageField(
-        upload_to='profile_images/', null=True, blank=True)
-    description = models.TextField(blank=True)
+    approver_code = models.CharField(max_length=50, unique=True)
+    profile_image = models.ImageField(upload_to='approver_images/', null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return self.user.username
+
+    def save(self, *args, **kwargs):
+        # Add to 'User' model
+        super().save(*args, **kwargs)
+        # Assign user to the 'Approver' group
+        approver_group, created = Group.objects.get_or_create(name='Approver')
+        self.user.groups.add(approver_group)
 
 
 # อุปกรณ์ที่สามารถยืมได้
