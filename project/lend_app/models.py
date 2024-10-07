@@ -38,13 +38,6 @@ class Borrower(models.Model):
     def __str__(self):
         return self.user.username
 
-    def save(self, *args, **kwargs):
-        # Add to 'User' model
-        super().save(*args, **kwargs)
-        # Assign user to the 'Borrower' group
-        borrower_group, created = Group.objects.get_or_create(name='Borrower')
-        self.user.groups.add(borrower_group)
-
 
 # ผู้อนุมัติการยืม
 
@@ -56,14 +49,6 @@ class Approver(models.Model):
 
     def __str__(self):
         return self.user.username
-
-    def save(self, *args, **kwargs):
-        # Add to 'User' model
-        super().save(*args, **kwargs)
-        # Assign user to the 'Approver' group
-        approver_group, created = Group.objects.get_or_create(name='Approver')
-        self.user.groups.add(approver_group)
-
 
 # อุปกรณ์ที่สามารถยืมได้
 class Item(models.Model):

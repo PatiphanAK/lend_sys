@@ -17,13 +17,31 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class BorrowerSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', write_only=True)
+    email = serializers.EmailField(source='user.email', write_only=True)
+    password = serializers.CharField(write_only=True)
+
     class Meta:
         model = Borrower
-        fields = '__all__'
+        fields = ['id', 'profile_image', 'description', 'username', 'email', 'password']
 
     def create(self, validated_data):
-        user = validated_data.pop('user')
+        # Get user data
+        user_data = validated_data.pop('user')
+        password = user_data.pop('password')
+
+        # Create user and set password
+        user = User(**user_data)
+        user.password = make_password(password)  # Hash the password
+        user.save()
+
+        # Create borrower
         borrower = Borrower.objects.create(user=user, **validated_data)
+
+        # Add user to Borrower group
+        borrower_group, created = Group.objects.get_or_create(name='Borrower')
+        user.groups.add(borrower_group)
+
         return borrower
 
 
@@ -32,9 +50,32 @@ class ApproverSerializer(serializers.ModelSerializer):
         model = Approver
         fields = '__all__'
 
+class ApproverSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', write_only=True)
+    email = serializers.EmailField(source='user.email', write_only=True)
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = Approver
+        fields = ['id', 'profile_image', 'description', 'username', 'email', 'password']
+
     def create(self, validated_data):
-        user = validated_data.pop('user')
+        # Get user data
+        user_data = validated_data.pop('user')
+        password = user_data.pop('password')
+
+        # Create user and set password
+        user = User(**user_data)
+        user.password = make_password(password)  # Hash the password
+        user.save()
+
+        # Create approver
         approver = Approver.objects.create(user=user, **validated_data)
+
+        # Add user to Approver group
+        approver_group, created = Group.objects.get_or_create(name='Approver')
+        user.groups.add(approver_group)
+
         return approver
 
 class ItemSerializer(serializers.ModelSerializer):
@@ -67,7 +108,7 @@ class BorrowRequestSerializer(serializers.ModelSerializer):
                 )
 
         # Validate borrow date is not in the past
-        if borrow_date < timezone.now().date():
+        if borrow_date < timezone.now():
             raise serializers.ValidationError(
                 "Borrow date must not be in the past.",
                 code='invalid_borrow_date'
