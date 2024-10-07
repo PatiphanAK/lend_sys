@@ -18,35 +18,42 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name']
+
+
 class BorrowerSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source='user.username', write_only=True)
-    email = serializers.EmailField(source='user.email', write_only=True)
-    password = serializers.CharField(write_only=True)
+    username = serializers.CharField(write_only=True)
+    email = serializers.EmailField(write_only=True)
+    first_name = serializers.CharField(write_only=True)
+    last_name = serializers.CharField(write_only=True)
     profile_image = serializers.URLField(required=False, allow_null=True)
-    fname = serializers.CharField(
-        source='user.first_name', write_only=True)  # เพิ่มฟิลด์ fname
-    lname = serializers.CharField(
-        source='user.last_name', write_only=True)   # เพิ่มฟิลด์ lname
 
     class Meta:
         model = Borrower
-        fields = ['id', 'profile_image', 'description',
-                  'username', 'email', 'password', 'fname', 'lname']
+        fields = ('id', 'profile_image', 'description',
+                  'username', 'email', 'first_name', 'last_name')
 
     def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        username = user_data.get('username')
-        password = user_data.pop('password')
-
         # Check if username already exists
-        if User.objects.filter(username=username).exists():
+        if User.objects.filter(username=validated_data['username']).exists():
             raise ValidationError(
                 {"username": "This username is already taken."})
 
-        # Create user and set password
-        user = User(**user_data)
-        user.password = make_password(password)  # Hash the password
-        user.save()
+        # Prepare user data
+        user_data = {
+            'username': validated_data.pop('username'),
+            'email': validated_data.pop('email'),
+            'first_name': validated_data.pop('first_name'),
+            'last_name': validated_data.pop('last_name'),
+        }
+
+        # Create user and validate user data
+        user_serializer = UserSerializer(data=user_data)
+        user_serializer.is_valid(raise_exception=True)
+        user = user_serializer.save()
 
         # Create borrower
         borrower = Borrower.objects.create(user=user, **validated_data)
@@ -58,10 +65,12 @@ class BorrowerSerializer(serializers.ModelSerializer):
         return borrower
 
 
-class ApproverSerializer(serializers.ModelSerializer):
+class BorrowerListSerializer(serializers.ModelSerializer):
+    user = UserSerializer()  # Nested serializer เพื่อรวมข้อมูล User
+
     class Meta:
-        model = Approver
-        fields = '__all__'
+        model = Borrower
+        fields = ('id', 'profile_image', 'description', 'user')
 
 
 class ApproverSerializer(serializers.ModelSerializer):
