@@ -44,8 +44,9 @@ class Borrower(models.Model):
 
 class Approver(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    approver_code = models.CharField(max_length=50, unique=True)
+    description = models.TextField(blank=True)
     profile_image = models.ImageField(upload_to='approver_images/', null=True, blank=True)
+    organization = models.ForeignKey(Organization, on_delete=models.PROTECT, null=True, blank=True)
 
     def __str__(self):
         return self.user.username

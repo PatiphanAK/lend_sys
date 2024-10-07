@@ -19,13 +19,21 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name']
+        fields = ['username', 'email', 'first_name', 'last_name', 'password']
+
+    def create(self, validated_data):
+        # Hash the password before saving
+        validated_data['password'] = make_password(validated_data['password'])
+        return super().create(validated_data)
 
 
 class BorrowerSerializer(serializers.ModelSerializer):
     username = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True)
     email = serializers.EmailField(write_only=True)
     first_name = serializers.CharField(write_only=True)
     last_name = serializers.CharField(write_only=True)
@@ -34,30 +42,25 @@ class BorrowerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Borrower
         fields = ('id', 'profile_image', 'description',
-                  'username', 'email', 'first_name', 'last_name')
+                  'username', 'password', 'email', 'first_name', 'last_name')
 
     def create(self, validated_data):
-        # Check if username already exists
-        if User.objects.filter(username=validated_data['username']).exists():
-            raise ValidationError(
-                {"username": "This username is already taken."})
-
-        # Prepare user data
+        # Use UserSerializer to create a user
         user_data = {
             'username': validated_data.pop('username'),
             'email': validated_data.pop('email'),
             'first_name': validated_data.pop('first_name'),
             'last_name': validated_data.pop('last_name'),
+            'password': validated_data.pop('password'),
         }
-
-        # Create user and validate user data
+        
         user_serializer = UserSerializer(data=user_data)
-        user_serializer.is_valid(raise_exception=True)
-        user = user_serializer.save()
-
-        # Create borrower
+        user_serializer.is_valid(raise_exception=True)  # Raise an error if the user data is invalid
+        user = user_serializer.save()  # Create the user
+        
+        # Create the borrower
         borrower = Borrower.objects.create(user=user, **validated_data)
-
+        
         # Add user to Borrower group
         borrower_group, created = Group.objects.get_or_create(name='Borrower')
         user.groups.add(borrower_group)
@@ -74,34 +77,44 @@ class BorrowerListSerializer(serializers.ModelSerializer):
 
 
 class ApproverSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source='user.username', write_only=True)
-    email = serializers.EmailField(source='user.email', write_only=True)
+    username = serializers.CharField(write_only=True)
     password = serializers.CharField(write_only=True)
+    email = serializers.EmailField(write_only=True)
+    first_name = serializers.CharField(write_only=True)
+    last_name = serializers.CharField(write_only=True)
+    organization = serializers.PrimaryKeyRelatedField(queryset=Organization.objects.all())
 
     class Meta:
         model = Approver
-        fields = ['id', 'profile_image', 'description',
-                  'username', 'email', 'password']
+        fields = ('id', 'description', 'profile_image', 'username', 'email', 'first_name', 'last_name', 'password', 'organization')
 
     def create(self, validated_data):
-        # Get user data
-        user_data = validated_data.pop('user')
-        password = user_data.pop('password')
-
-        # Create user and set password
-        user = User(**user_data)
-        user.password = make_password(password)  # Hash the password
-        user.save()
-
-        # Create approver
+        # Use UserSerializer to create a user
+        user_data = {
+            'username': validated_data.pop('username'),
+            'email': validated_data.pop('email'),
+            'first_name': validated_data.pop('first_name'),
+            'last_name': validated_data.pop('last_name'),
+            'password': validated_data.pop('password'),
+        }
+        
+        user_serializer = UserSerializer(data=user_data)
+        user_serializer.is_valid(raise_exception=True)  # Raise an error if the user data is invalid
+        user = user_serializer.save()  # Create the user
+        
+        # Create the approver
         approver = Approver.objects.create(user=user, **validated_data)
 
         # Add user to Approver group
         approver_group, created = Group.objects.get_or_create(name='Approver')
         user.groups.add(approver_group)
-
         return approver
 
+class ApproverListSerializer(serializers.ModelSerializer):
+    user = UserSerializer()  # Nested serializer เพื่อรวมข้อมูล User
+    class Meta:
+        model = Approver
+        fields = ('id', 'profile_image', 'description', 'user')
 
 class ItemSerializer(serializers.ModelSerializer):
     class Meta:
