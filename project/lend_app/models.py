@@ -1,6 +1,9 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 # หน่วยงานที่มีอุปกรณ์ให้ยืม
+
+
 class Organization(models.Model):
     ORG_TYPES = (
         ('GOV', 'Government'),
@@ -15,6 +18,8 @@ class Organization(models.Model):
         return self.name
 
 # หมวดหมู่ของ
+
+
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
@@ -23,8 +28,13 @@ class Category(models.Model):
         return self.name
 
 # ผู้ยืม
+
+
 class Borrower(models.Model):
-    name = models.CharField(max_length=100)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    profile_image = models.ImageField(
+        upload_to='profile_images/', null=True, blank=True)
+    description = models.TextField(blank=True)
 
     def __str__(self):
         return self.name
@@ -32,9 +42,12 @@ class Borrower(models.Model):
 
 # ผู้อนุมัติการยืม
 class Approver(models.Model):
-    name = models.CharField(max_length=100)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     position = models.CharField()
+    profile_image = models.ImageField(
+        upload_to='profile_images/', null=True, blank=True)
+    description = models.TextField(blank=True)
 
     def __str__(self):
         return self.name
@@ -44,7 +57,10 @@ class Approver(models.Model):
 class Item(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='items')
+    category = models.ForeignKey(
+        Category, on_delete=models.CASCADE, related_name='items')
+    item_image = models.ImageField(
+        upload_to='item_images/', blank=True, null=True)  # เพิ่มฟิลด์ item_image
 
     def __str__(self):
         return self.name
@@ -70,18 +86,21 @@ class BorrowRequest(models.Model):
         ('RETURNED', 'Returned'),
     )
 
-    borrower = models.ForeignKey(Borrower, on_delete=models.CASCADE)
+    borrower = models.ForeignKey(Borrower, on_delete=models.SET_NULL, null=True)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
-    approver = models.ForeignKey(Approver, on_delete=models.CASCADE)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
+    approver = models.ForeignKey(Approver, on_delete=models.PROTECT)
+    status = models.CharField(
+        max_length=10, choices=STATUS_CHOICES, default='PENDING')
     borrow_date = models.DateField(auto_now_add=True)
     return_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return f'{self.borrower.name} requests {self.quantity} {self.item.name}(s)'
-    
-#ต่อคิวยืมของ
+
+# ต่อคิวยืมของ
+
+
 class BorrowQueue(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     borrower = models.ForeignKey(Borrower, on_delete=models.CASCADE)
@@ -89,7 +108,11 @@ class BorrowQueue(models.Model):
     request_date = models.DateField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('item', 'queue_position')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['item', 'queue_position'], name='unique_queue_position'
+            )
+        ]
 
     def __str__(self):
         return f'{self.borrower.name} is in queue for {self.item.name} at position {self.queue_position}'
