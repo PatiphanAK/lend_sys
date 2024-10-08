@@ -1,18 +1,20 @@
 from django.contrib.auth.models import Group
-from rest_framework import status
+from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import BorrowRequest, Borrower, Approver
-from .serializers import BorrowRequestSerializer, BorrowerSerializer, BorrowerListSerializer, ApproverListSerializer, ApproverSerializer
-from rest_framework.permissions import AllowAny
+from .models import BorrowRequest, Borrower, Approver, Item
+from .serializers import BorrowRequestSerializer, BorrowerSerializer, BorrowerListSerializer, ApproverListSerializer, ApproverSerializer, ItemSerializer
+from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListAPIView
+
 # Create your views here.
 
 # Borrower
 # CRUD with Borrower
 
 
-class BorrowerListView(APIView):
+class BorrowerListView(generics.ListAPIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -46,22 +48,14 @@ class ApproverRegisterView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-class ApproverListView(APIView):
+
+
+class ApproverListView(generics.ListAPIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        # ดึงกลุ่มที่ชื่อ 'Approver'
-        approver_group = Group.objects.filter(name='Approver').first()
-
-        # ตรวจสอบว่ากลุ่มมีอยู่หรือไหม
-        if approver_group:
-            # กรอง Approver ที่อยู่ในกลุ่ม 'Approver'
-            borrowers = Approver.objects.filter(user__groups=approver_group)
-        else:
-            borrowers = Approver.objects.none()  # หากไม่มีกลุ่มให้คืนค่าเป็นว่าง
-
-        serializer = ApproverListSerializer(borrowers, many=True)
+        approvers = Approver.objects.all()
+        serializer = ApproverListSerializer(approvers, many=True)
         return Response(serializer.data)
 
 
@@ -80,3 +74,13 @@ class BorrowRequestList(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ItemListView(ListAPIView):
+    queryset = Item.objects.all()
+    serializer_class = ItemSerializer
+    permission_classes = [AllowAny]
+
+class ItemDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = Item.objects.all()
+    serializer_class = ItemSerializer
+    permission_classes = [AllowAny]

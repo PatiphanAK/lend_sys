@@ -32,7 +32,8 @@ class Category(models.Model):
 
 class Borrower(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    profile_image = models.ImageField(upload_to='borrower_images/', null=True, blank=True)
+    profile_image = models.ImageField(
+        upload_to='borrower_images/', null=True, blank=True)
     description = models.TextField(blank=True)
 
     def __str__(self):
@@ -45,18 +46,22 @@ class Borrower(models.Model):
 class Approver(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     description = models.TextField(blank=True)
-    profile_image = models.ImageField(upload_to='approver_images/', null=True, blank=True)
-    organization = models.ForeignKey(Organization, on_delete=models.PROTECT, null=True, blank=True)
+    profile_image = models.ImageField(
+        upload_to='approver_images/', null=True, blank=True)
+    organization = models.ForeignKey(
+        Organization, on_delete=models.PROTECT, null=True, blank=True)
 
     def __str__(self):
         return self.user.username
 
 # อุปกรณ์ที่สามารถยืมได้
+
+
 class Item(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
-    category = models.ForeignKey(
-        Category, on_delete=models.CASCADE, related_name='items')
+    category = models.ManyToManyField(
+        Category, related_name='items')
     item_image = models.ImageField(
         upload_to='item_images/', blank=True, null=True)  # เพิ่มฟิลด์ item_image
 
@@ -84,7 +89,8 @@ class BorrowRequest(models.Model):
         ('RETURNED', 'Returned'),
     )
 
-    borrower = models.ForeignKey(Borrower, on_delete=models.SET_NULL, null=True)
+    borrower = models.ForeignKey(
+        Borrower, on_delete=models.SET_NULL, null=True)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     approver = models.ForeignKey(Approver, on_delete=models.PROTECT)
