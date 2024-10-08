@@ -1,12 +1,15 @@
-from django.contrib.auth.models import Group
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import BorrowRequest, Borrower, Approver, Item
-from .serializers import BorrowRequestSerializer, BorrowerSerializer, BorrowerListSerializer, ApproverListSerializer, ApproverSerializer, ItemSerializer
-from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
-from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListAPIView
+from .models import BorrowRequest, Borrower, Approver, Item, EquipmentStock
+from .serializers import BorrowRequestSerializer, BorrowerSerializer, BorrowerListSerializer, ApproverListSerializer, ApproverSerializer, ItemSerializer, EquipmentStockSerializer, EquipmentStockDetailSerializer
+from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly, IsAuthenticated
+from .filters import EquipmentStockFilter
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter
+
 
 # Create your views here.
 
@@ -75,12 +78,38 @@ class BorrowRequestList(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ItemListView(ListAPIView):
+
+class ListItemView(generics.ListAPIView):
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
     permission_classes = [AllowAny]
 
-class ItemDetailView(RetrieveUpdateDestroyAPIView):
+
+class CreateItemView(generics.CreateAPIView):
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
     permission_classes = [AllowAny]
+
+
+class ItemDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Item.objects.all()
+    serializer_class = ItemSerializer
+    permission_classes = [AllowAny]
+
+
+class ItemListFilter(generics.ListAPIView):
+    queryset = Item.objects.all()
+
+
+class EquipmentStockDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = EquipmentStock.objects.all()
+    serializer_class = EquipmentStockSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+
+class SearchItemListView(generics.ListAPIView):
+    queryset = EquipmentStock.objects.all()
+    serializer_class = EquipmentStockDetailSerializer
+    filter_backends = (DjangoFilterBackend, SearchFilter)
+    filterset_class = EquipmentStockFilter
+    search_fields = ['item__name', 'organization__name']

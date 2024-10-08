@@ -121,6 +121,13 @@ class ItemSerializer(serializers.ModelSerializer):
         model = Item
         fields = '__all__'
 
+class EquipmentStockDetailSerializer(serializers.ModelSerializer):
+    item = ItemSerializer()  # รวม serializer ของ Item
+
+    class Meta:
+        model = EquipmentStock
+        fields = ['item', 'organization', 'quantity', 'available']
+
 
 class EquipmentStockSerializer(serializers.ModelSerializer):
     class Meta:

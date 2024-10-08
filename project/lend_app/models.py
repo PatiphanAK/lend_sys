@@ -75,7 +75,8 @@ class EquipmentStock(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     available = models.PositiveIntegerField(default=0)
-
+    is_available = models.BooleanField(default=True)
+    
     def __str__(self):
         return f'{self.item.name} at {self.organization.name}'
 
