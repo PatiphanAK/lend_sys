@@ -1,11 +1,9 @@
 from lend_app.models import BorrowRequest
 from lend_app.serializers import BorrowRequestSerializer
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated, AllowAny
-
-# get_queryset คือการกรองข้อมูลที่จะแสดง
-# update คือการอัพเดทข้อมูล
-# get_queryset, update คือ method ที่มีอยู่ใน superclass อ้างอิง https://www.django-rest-framework.org/api-guide/generic-views/
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
 
 class BorrowRequestListView(generics.ListCreateAPIView):
     queryset = BorrowRequest.objects.all()
@@ -18,7 +16,6 @@ class BorrowRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
 class HistoryBorrowRequestListView(generics.ListAPIView):
-    queryset = BorrowRequest.objects.all()
     serializer_class = BorrowRequestSerializer
     permission_classes = [IsAuthenticated]
 
@@ -26,7 +23,6 @@ class HistoryBorrowRequestListView(generics.ListAPIView):
         return BorrowRequest.objects.filter(borrower=self.request.user) # แสดงรายการที่ยืมโดยผู้ยืม
 
 class HistoryApproveRequestListView(generics.ListAPIView):
-    queryset = BorrowRequest.objects.all()
     serializer_class = BorrowRequestSerializer
     permission_classes = [IsAuthenticated]
 
@@ -74,7 +70,6 @@ class ReturnBorrowRequestView(generics.UpdateAPIView):
         return super().update(request, *args, **kwargs) # อัพเดทสถานะการคืนของ
 
 class HistoryBorrowRequestListofOrganizationView(generics.ListAPIView):
-    queryset = BorrowRequest.objects.all()
     serializer_class = BorrowRequestSerializer
     permission_classes = [IsAuthenticated]
 
@@ -87,10 +82,3 @@ class HistoryBorrowRequestListofOrganizationView(generics.ListAPIView):
 
     def get_queryset(self):
         return BorrowRequest.objects.filter(item__organization=self.request.user.organization, status='RETURNED') # แสดงรายการที่อยู่ในองค์กรเดียวกันและสถานะเป็น RETURNED
-
-class HistoryBorrowRequestListofOrganizationView(generics.ListAPIView):
-    serializer_class = BorrowRequestSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return BorrowRequest.objects.filter(item__organization=self.request.user.organization) # แสดงรายการที่อยู่ในองค์กรเดียวกัน
