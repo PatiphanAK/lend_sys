@@ -41,3 +41,4 @@ class SearchItemListView(generics.ListAPIView):
     filter_backends = (DjangoFilterBackend, SearchFilter)
     filterset_class = EquipmentStockFilter
     search_fields = ['item__name', 'organization__name']
+
