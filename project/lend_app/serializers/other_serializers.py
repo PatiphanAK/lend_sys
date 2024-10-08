@@ -16,6 +16,7 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = '__all__'
 
+
 class BorrowerListSerializer(serializers.ModelSerializer):
     user = UserSerializer()  # Nested serializer เพื่อรวมข้อมูล User
 
@@ -31,21 +32,14 @@ class ApproverListSerializer(serializers.ModelSerializer):
         model = Approver
         fields = ('id', 'profile_image', 'description', 'user')
 
-class ItemSerializerforSeacrh(serializers.ModelSerializer):
-    categories = CategorySerializer(many=True)
-
-    class Meta:
-        model = Item
-        fields = '__all__'
-
 
 class ItemSerializer(serializers.ModelSerializer):
-    categories = serializers.PrimaryKeyRelatedField(many=True, queryset=Category.objects.all())
+    categories = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Category.objects.all())
 
     class Meta:
         model = Item
         fields = '__all__'
-
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -54,18 +48,53 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 
-class EquipmentStockDetailSerializer(serializers.ModelSerializer):
-    item = ItemSerializer()  # รวม serializer ของ Item
-
-    class Meta:
-        model = EquipmentStock
-        fields = ['item', 'organization', 'quantity', 'available']
-
-
 class EquipmentStockSerializer(serializers.ModelSerializer):
     class Meta:
         model = EquipmentStock
         fields = '__all__'
+
+class AssignItemToStockSerializer(serializers.Serializer):
+    item_id = serializers.IntegerField()
+    organization_id = serializers.IntegerField()
+    quantity = serializers.IntegerField()
+
+    def validate(self, data):
+        try:
+            data['item'] = Item.objects.get(id=data['item_id'])
+        except Item.DoesNotExist:
+            raise serializers.ValidationError("Item does not exist")
+
+        try:
+            data['organization'] = Organization.objects.get(id=data['organization_id'])
+        except Organization.DoesNotExist:
+            raise serializers.ValidationError("Organization does not exist")
+
+        # ตรวจสอบว่า quantity ต้องเป็นค่าบวก
+        if data['quantity'] <= 0:
+            raise serializers.ValidationError("Quantity must be a positive integer")
+
+        return data
+
+    def create(self, validated_data):
+        item = validated_data['item']
+        organization = validated_data['organization']
+        quantity = validated_data['quantity']
+
+        # ใช้ get_or_create เพื่อไม่ให้เกิดปัญหา id ซ้ำกัน
+        equipment_stock, created = EquipmentStock.objects.get_or_create(
+            item=item,
+            organization=organization,
+            defaults={'quantity': quantity, 'available': quantity}
+        )
+
+        # ถ้ามีอยู่แล้ว (ไม่ได้สร้างใหม่) ก็ทำการอัปเดตจำนวน
+        if not created:
+            equipment_stock.quantity += quantity
+            equipment_stock.available += quantity
+            equipment_stock.save()
+
+        return equipment_stock
+
 
 
 class BorrowRequestSerializer(serializers.ModelSerializer):

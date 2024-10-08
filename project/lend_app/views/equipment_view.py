@@ -1,9 +1,14 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from lend_app.models import Item, EquipmentStock
-from lend_app.serializers import ItemSerializer, EquipmentStockSerializer, ItemSerializerforSeacrh
+from lend_app.serializers import ItemSerializer, EquipmentStockSerializer, AssignItemToStockSerializer
 from lend_app.permissions import IsApprover
 from django.db.models import Q
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from lend_app.permissions import IsApprover
+
 
 # List Item View
 class ListItemView(generics.ListAPIView):
@@ -23,9 +28,9 @@ class CreateItemView(generics.CreateAPIView):
     serializer_class = ItemSerializer
     permission_classes = [IsAuthenticated, IsApprover]
 
-# Search Item List View
-class SearchItemListView(generics.ListAPIView):
-    serializer_class = ItemSerializerforSeacrh
+# Search Equipment Stock List View
+class SearchEquipmentStockListView(generics.ListAPIView):
+    serializer_class = EquipmentStockSerializer
     permission_classes = [AllowAny]  # ให้ทุกคนเข้าถึงได้
 
     def get_queryset(self):
@@ -33,14 +38,14 @@ class SearchItemListView(generics.ListAPIView):
         organization = self.request.query_params.get('organization', None)
         
         if query and organization:
-            return Item.objects.filter(
-                Q(name__icontains=query) & Q(organization__name__icontains=organization)
+            return EquipmentStock.objects.filter(
+                Q(item__name__icontains=query) & Q(organization__name__icontains=organization)
             )
         elif query:
-            return Item.objects.filter(name__icontains=query)
+            return EquipmentStock.objects.filter(item__name__icontains=query)
         elif organization:
-            return Item.objects.filter(organization__name__icontains=organization)
-        return Item.objects.all()
+            return EquipmentStock.objects.filter(organization__name__icontains=organization)
+        return EquipmentStock.objects.all()
 
 # List Equipment Stock View
 class ListEquipmentStockView(generics.ListAPIView):
@@ -59,3 +64,16 @@ class CreateEquipmentStockView(generics.CreateAPIView):
     queryset = EquipmentStock.objects.all()
     serializer_class = EquipmentStockSerializer
     permission_classes = [IsAuthenticated, IsApprover]
+
+class AssignItemToStockView(APIView):
+    permission_classes = [IsAuthenticated, IsApprover]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AssignItemToStockSerializer(data=request.data)
+        if serializer.is_valid():
+            equipment_stock = serializer.save()
+            return Response({
+                'message': 'Item assigned to stock successfully',
+                'equipment_stock': EquipmentStockSerializer(equipment_stock).data
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

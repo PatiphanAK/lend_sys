@@ -1,9 +1,10 @@
-from lend_app.models import BorrowRequest
-from lend_app.serializers import BorrowRequestSerializer
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from lend_app.models import BorrowRequest
+from lend_app.serializers import BorrowRequestSerializer
+from lend_app.permissions import IsApproverInOrganization
 
 class BorrowRequestListView(generics.ListCreateAPIView):
     queryset = BorrowRequest.objects.all()
@@ -29,10 +30,24 @@ class HistoryApproveRequestListView(generics.ListAPIView):
     def get_queryset(self):
         return BorrowRequest.objects.filter(approver=self.request.user) # แสดงรายการที่อนุมัติโดยผู้อนุมัติ
 
+class WaitingForApproveListViewForOrganization(generics.ListAPIView):
+    serializer_class = BorrowRequestSerializer
+    permission_classes = [IsAuthenticated, IsApproverInOrganization]
+
+    def get_queryset(self):
+        return BorrowRequest.objects.filter(status='PENDING', item__organization=self.request.user.organization) # แสดงรายการที่รอการอนุมัติในองค์กรเดียวกัน
+
+class WaitingForApproveListViewForBorrower(generics.ListAPIView):
+    serializer_class = BorrowRequestSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return BorrowRequest.objects.filter(status='PENDING', borrower=self.request.user) # แสดงรายการที่รอการอนุมัติสำหรับคนยืม
+
 class ApproveBorrowRequestView(generics.UpdateAPIView):
     queryset = BorrowRequest.objects.all()
     serializer_class = BorrowRequestSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsApproverInOrganization]
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -46,7 +61,7 @@ class ApproveBorrowRequestView(generics.UpdateAPIView):
 class RejectBorrowRequestView(generics.UpdateAPIView):
     queryset = BorrowRequest.objects.all()
     serializer_class = BorrowRequestSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsApproverInOrganization]
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -75,10 +90,3 @@ class HistoryBorrowRequestListofOrganizationView(generics.ListAPIView):
 
     def get_queryset(self):
         return BorrowRequest.objects.filter(item__organization=self.request.user.organization) # แสดงรายการที่อยู่ในองค์กรเดียวกัน
-
-class HistoryBorrowRequestListofOrganizationView(generics.ListAPIView):
-    serializer_class = BorrowRequestSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return BorrowRequest.objects.filter(item__organization=self.request.user.organization, status='RETURNED') # แสดงรายการที่อยู่ในองค์กรเดียวกันและสถานะเป็น RETURNED
