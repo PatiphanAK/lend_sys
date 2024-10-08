@@ -1,8 +1,9 @@
 from rest_framework import serializers
-from ..models import Organization, Category, Borrower, Approver, Item, EquipmentStock, BorrowRequest, BorrowQueue
+from ..models import Organization, Category, Borrower, Approver, Item, EquipmentStock, BorrowQueue, BorrowRequest
 from django.utils import timezone
 from .user_serializers import UserSerializer
-from rest_framework.exceptions import ValidationError
+import jwt
+SECRET_KEY = "django-insecure-p^2i3^s$*awxqmdcv7w5yu3+eyb(m#fn6*)h&r359*g=9-b8*c"
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
@@ -34,9 +35,6 @@ class ApproverListSerializer(serializers.ModelSerializer):
 
 
 class ItemSerializer(serializers.ModelSerializer):
-    categories = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Category.objects.all())
-
     class Meta:
         model = Item
         fields = '__all__'
@@ -49,6 +47,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class EquipmentStockSerializer(serializers.ModelSerializer):
+    item = ItemSerializer(read_only=True)
     class Meta:
         model = EquipmentStock
         fields = '__all__'
@@ -95,16 +94,25 @@ class AssignItemToStockSerializer(serializers.Serializer):
 
         return equipment_stock
 
-
-
 class BorrowRequestSerializer(serializers.ModelSerializer):
+    approver = serializers.PrimaryKeyRelatedField(queryset=Approver.objects.all(), required=False)
+    borrower = serializers.PrimaryKeyRelatedField(queryset=Borrower.objects.all(), required=False)
+
     class Meta:
         model = BorrowRequest
         fields = '__all__'
 
     def validate(self, attrs):
+        request = self.context.get('request')
+        if not request:
+            raise serializers.ValidationError("Request context is required")
+
+        approver = attrs.get('approver')
+        borrower = attrs.get('borrower')
+
         borrow_date = attrs.get('borrow_date')
         return_date = attrs.get('return_date')
+        status = attrs.get('status')
 
         # Validate date range
         if return_date and borrow_date:
@@ -115,20 +123,50 @@ class BorrowRequestSerializer(serializers.ModelSerializer):
                 )
 
         # Validate borrow date is not in the past
-        if borrow_date < timezone.now():
+        if borrow_date and borrow_date < timezone.now().date():
             raise serializers.ValidationError(
                 "Borrow date must not be in the past.",
                 code='invalid_borrow_date'
             )
 
         # Validate return date is not in the past
-        if return_date < timezone.now().date():
+        if return_date and return_date < timezone.now().date():
             raise serializers.ValidationError(
                 "Return date must not be in the past.",
                 code='invalid_return_date'
             )
 
+        # Validate approver for approved/rejected/returned status
+        if status in ['APPROVED', 'REJECTED', 'RETURNED'] and not approver:
+            raise serializers.ValidationError(
+                f"Approver is required when the request is {status.lower()}",
+                code='approver_required'
+            )
+
+        # Validate if returned, the approver must be the same as the original approver
+        if self.instance and status == 'RETURNED':
+            original_approver = self.instance.approver
+            if original_approver and approver != original_approver:
+                raise serializers.ValidationError(
+                    "The person returning the item must be the same as the approver.",
+                    code='approver_mismatch'
+                )
+
         return attrs
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if not request:
+            raise serializers.ValidationError("Request context is required")
+
+        borrower = Borrower.objects.get(user=request.user)
+        validated_data['borrower'] = borrower
+
+        if request.user.is_staff:
+            approver = Approver.objects.get(user=request.user)
+            validated_data['approver'] = approver
+
+        return super().create(validated_data)
 
 
 class BorrowQueueSerializer(serializers.ModelSerializer):

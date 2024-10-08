@@ -6,13 +6,14 @@ from rest_framework_simplejwt.views import (
 from .views import (
     BorrowerListView, BorrowerRegisterView, ApproverListView, ApproverRegisterView,
     ListItemView, ItemDetailView, CreateItemView, SearchEquipmentStockListView,
-    BorrowRequestListView, BorrowRequestDetailView, HistoryBorrowRequestListView,
-    HistoryApproveRequestListView, ApproveBorrowRequestView, RejectBorrowRequestView,
-    ReturnBorrowRequestView, HistoryBorrowRequestListofOrganizationView,
-    WaitingForApproveListViewForOrganization, WaitingForApproveListViewForBorrower,
-    ListEquipmentStockView, EquipmentStockDetailView, CreateEquipmentStockView,
+    BorrowRequestListView, BorrowRequestDetailView, 
+    HistoryBorrowRequestForBorrower, HistoryBorrowRequestForApprover,
+    WaitingForApproveRequestListView, WaitingForReturnRequestListView,
+    ReturnedRequestListView, RejectedRequestListView,
+    ListEquipmentStockView, CreateEquipmentStockView, EquipmentStockDetailView,
     AssignItemToStockView
 )
+
 
 urlpatterns = [
     path('borrowers/', BorrowerListView.as_view(), name='borrower-list'),
@@ -27,30 +28,25 @@ urlpatterns = [
     path('items/search/', SearchEquipmentStockListView.as_view(),
          name='search-item-list'),
 
-    # URLs สำหรับการยืมและคืน
-    path('borrow-requests/', BorrowRequestListView.as_view(),
-         name='borrow-request-list'),
-    path('borrow-requests/<int:pk>/', BorrowRequestDetailView.as_view(),
-         name='borrow-request-detail'),
+    # URL สำหรับการจัดการคำขอยืม
+    path('borrow-requests/', BorrowRequestListView.as_view(), name='borrow-request-list'),
+    path('borrow-requests/<int:pk>/', BorrowRequestDetailView.as_view(), name='borrow-request-detail'),
 
-    path('borrow-requests/history/', HistoryBorrowRequestListView.as_view(),
-         name='borrow-request-history'),
-    path('approve-requests/history/', HistoryApproveRequestListView.as_view(),
-         name='approve-request-history'),
+    # URLs สำหรับประวัติการยืม
+    path('borrow-requests/history/borrower/', HistoryBorrowRequestForBorrower.as_view(), name='history-borrow-request-for-borrower'),
+    path('borrow-requests/history/approver/', HistoryBorrowRequestForApprover.as_view(), name='history-borrow-request-for-approver'),
 
-    path('borrow-requests/<int:pk>/approve/',
-         ApproveBorrowRequestView.as_view(), name='borrow-request-approve'),
-    path('borrow-requests/<int:pk>/reject/',
-         RejectBorrowRequestView.as_view(), name='borrow-request-reject'),
-    path('borrow-requests/<int:pk>/return/',
-         ReturnBorrowRequestView.as_view(), name='borrow-request-return'),
+    # URLs สำหรับรายการที่รอการอนุมัติ
+    path('borrow-requests/waiting-for-approve/', WaitingForApproveRequestListView.as_view(), name='waiting-for-approve-request-list'),
 
-    path('organization/borrow-requests/history/', HistoryBorrowRequestListofOrganizationView.as_view(),
-         name='organization-borrow-request-history'),
-    path('borrow-requests/waiting-for-approve/organization/',
-         WaitingForApproveListViewForOrganization.as_view(), name='waiting-for-approve-organization'),
-    path('borrow-requests/waiting-for-approve/borrower/',
-         WaitingForApproveListViewForBorrower.as_view(), name='waiting-for-approve-borrower'),
+    # URLs สำหรับรายการที่รอการคืน
+    path('borrow-requests/waiting-for-return/', WaitingForReturnRequestListView.as_view(), name='waiting-for-return-request-list'),
+
+    # URLs สำหรับรายการที่คืนแล้ว
+    path('borrow-requests/returned/', ReturnedRequestListView.as_view(), name='returned-request-list'),
+
+    # URLs สำหรับรายการที่ถูกปฏิเสธ
+    path('borrow-requests/rejected/', RejectedRequestListView.as_view(), name='rejected-request-list'),
 
     # URLs สำหรับ Equipment Stock
     path('equipment-stocks/', ListEquipmentStockView.as_view(),

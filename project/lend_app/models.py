@@ -94,7 +94,7 @@ class BorrowRequest(models.Model):
         Borrower, on_delete=models.SET_NULL, null=True)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
-    approver = models.ForeignKey(Approver, on_delete=models.PROTECT)
+    approver = models.ForeignKey(Approver, on_delete=models.PROTECT, null=True, blank=True)
     status = models.CharField(
         max_length=10, choices=STATUS_CHOICES, default='PENDING')
     borrow_date = models.DateField(auto_now_add=True)
