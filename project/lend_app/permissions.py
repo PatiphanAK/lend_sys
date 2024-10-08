@@ -7,8 +7,8 @@ class IsApprover(BasePermission):
 
 class IsApproverInOrganization(BasePermission):
     def has_object_permission(self, request, view, obj):
-        # ตรวจสอบว่าผู้ใช้เป็น Approver และอยู่ในองค์กรเดียวกัน
-        return hasattr(request.user, 'approver') and obj.organization == request.user.organization
+    # Check if the user is an approver and the organization matches the borrow request's equipment_stock organization
+        return hasattr(request.user, 'approver') and obj.equipment_stock.organization == request.user.approver.organization
 
 class IsOwner(BasePermission):
     def has_object_permission(self, request, view, obj):

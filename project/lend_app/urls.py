@@ -11,7 +11,8 @@ from .views import (
     WaitingForApproveRequestListView, WaitingForReturnRequestListView,
     ReturnedRequestListView, RejectedRequestListView,
     ListEquipmentStockView, CreateEquipmentStockView, EquipmentStockDetailView,
-    AssignItemToStockView
+    AssignItemToStockView, CheckOrganizationStockView, ApproveBorrowRequestView,
+    RejectBorrowRequestView, ConfirmReturnView
 )
 
 
@@ -39,6 +40,11 @@ urlpatterns = [
     # URLs สำหรับรายการที่รอการอนุมัติ
     path('borrow-requests/waiting-for-approve/', WaitingForApproveRequestListView.as_view(), name='waiting-for-approve-request-list'),
 
+    # URLs สำหรับการอนุมัติคำขอยืม
+    path('approve-borrow-request/<int:pk>/', ApproveBorrowRequestView.as_view(), name='approve-borrow-request'),
+    path('reject-borrow-request/<int:pk>/', RejectBorrowRequestView.as_view(), name='reject-borrow-request'),
+    path('confirm-return/<int:pk>/', ConfirmReturnView.as_view(), name='confirm-return'),
+
     # URLs สำหรับรายการที่รอการคืน
     path('borrow-requests/waiting-for-return/', WaitingForReturnRequestListView.as_view(), name='waiting-for-return-request-list'),
 
@@ -55,6 +61,7 @@ urlpatterns = [
          name='equipment-stock-create'),
     path('equipment-stocks/<int:pk>/', EquipmentStockDetailView.as_view(),
          name='equipment-stock-detail'),
+    path('organization-stocks/', CheckOrganizationStockView.as_view(), name='organization-stock-list'),
 
     # URL สำหรับ AssignItemToStockView
     path('equipment-stocks/assign/', AssignItemToStockView.as_view(),

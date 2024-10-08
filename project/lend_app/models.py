@@ -92,7 +92,8 @@ class BorrowRequest(models.Model):
 
     borrower = models.ForeignKey(
         Borrower, on_delete=models.SET_NULL, null=True)
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    equipment_stock = models.ForeignKey(
+        EquipmentStock, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     approver = models.ForeignKey(Approver, on_delete=models.PROTECT, null=True, blank=True)
     status = models.CharField(
@@ -100,8 +101,7 @@ class BorrowRequest(models.Model):
     borrow_date = models.DateField(auto_now_add=True)
     return_date = models.DateField(null=True, blank=True)
 
-    def __str__(self):
-        return f'{self.borrower.name} requests {self.quantity} {self.item.name}(s)'
+
 
 # ต่อคิวยืมของ
 

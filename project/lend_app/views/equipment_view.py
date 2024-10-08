@@ -1,32 +1,29 @@
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from lend_app.models import Item, EquipmentStock
-from lend_app.serializers import ItemSerializer, EquipmentStockSerializer, AssignItemToStockSerializer
-from lend_app.permissions import IsApprover
-from django.db.models import Q
+from rest_framework import generics, status
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from lend_app.permissions import IsApprover
-
+from django.db.models import Q
+from lend_app.models import Item, EquipmentStock
+from lend_app.serializers.other_serializers import ItemSerializer, EquipmentStockSerializer, AssignItemToStockSerializer, OrganizationStockSerializer
+from lend_app.permissions import IsApprover, IsApproverInOrganization
 
 # List Item View
 class ListItemView(generics.ListAPIView):
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [AllowAny]  # ให้ทุกคนเข้าถึงได้
 
 # Item Detail View
 class ItemDetailView(generics.RetrieveAPIView):
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]  # ให้ทุกคนเข้าถึงได้
 
 # Create Item View
 class CreateItemView(generics.CreateAPIView):
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
-    permission_classes = [IsAuthenticated, IsApprover]
+    permission_classes = [IsAuthenticated, IsApproverInOrganization]  # ต้องการการยืนยันตัวตนและเป็น Approver ในองค์กร
 
 # Search Equipment Stock List View
 class SearchEquipmentStockListView(generics.ListAPIView):
@@ -51,22 +48,23 @@ class SearchEquipmentStockListView(generics.ListAPIView):
 class ListEquipmentStockView(generics.ListAPIView):
     queryset = EquipmentStock.objects.all()
     serializer_class = EquipmentStockSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]  # ให้ทุกคนเข้าถึงได้
 
 # Equipment Stock Detail View
 class EquipmentStockDetailView(generics.RetrieveAPIView):
     queryset = EquipmentStock.objects.all()
     serializer_class = EquipmentStockSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]  # ให้ทุกคนเข้าถึงได้
 
 # Create Equipment Stock View
 class CreateEquipmentStockView(generics.CreateAPIView):
     queryset = EquipmentStock.objects.all()
     serializer_class = EquipmentStockSerializer
-    permission_classes = [IsAuthenticated, IsApprover]
+    permission_classes = [IsAuthenticated, IsApproverInOrganization]  # ต้องการการยืนยันตัวตนและเป็น Approver ในองค์กร
 
+# Assign Item to Stock View
 class AssignItemToStockView(APIView):
-    permission_classes = [IsAuthenticated, IsApprover]
+    permission_classes = [IsAuthenticated, IsApproverInOrganization]  # ต้องการการยืนยันตัวตนและเป็น Approver ในองค์กร
 
     def post(self, request, *args, **kwargs):
         serializer = AssignItemToStockSerializer(data=request.data)
@@ -77,3 +75,12 @@ class AssignItemToStockView(APIView):
                 'equipment_stock': EquipmentStockSerializer(equipment_stock).data
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CheckOrganizationStockView(generics.ListAPIView):
+    serializer_class = OrganizationStockSerializer
+    permission_classes = [IsAuthenticated]  # ต้องการการยืนยันตัวตน
+
+    def get_queryset(self):
+        approver = self.request.user.approver
+        organization_id = approver.organization.id
+        return EquipmentStock.objects.filter(organization_id=organization_id)

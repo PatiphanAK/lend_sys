@@ -47,10 +47,26 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class EquipmentStockSerializer(serializers.ModelSerializer):
-    item = ItemSerializer(read_only=True)
+    item = serializers.StringRelatedField(read_only=True)
+    organization = serializers.StringRelatedField(read_only=True)
+
     class Meta:
         model = EquipmentStock
-        fields = '__all__'
+        fields = ['id', 'item', 'organization', 'quantity', 'available', 'is_available']
+
+
+class CreateEquipmentStockSerializer(serializers.ModelSerializer):
+    item_id = serializers.PrimaryKeyRelatedField(queryset=Item.objects.all(), source='item')
+
+    class Meta:
+        model = EquipmentStock
+        fields = ['item_id', 'organization', 'quantity', 'available', 'is_available']
+
+    def validate(self, data):
+        if 'available' not in data:
+            data['available'] = data['quantity']
+        return data
+
 
 class AssignItemToStockSerializer(serializers.Serializer):
     item_id = serializers.IntegerField()
@@ -162,11 +178,25 @@ class BorrowRequestSerializer(serializers.ModelSerializer):
         borrower = Borrower.objects.get(user=request.user)
         validated_data['borrower'] = borrower
 
-        if request.user.is_staff:
-            approver = Approver.objects.get(user=request.user)
-            validated_data['approver'] = approver
+        approver = Approver.objects.get(user=request.user)
+        validated_data['approver'] = approver
 
         return super().create(validated_data)
+
+class OrganizationStockSerializer(serializers.ModelSerializer):
+    item = ItemSerializer(read_only=True)
+
+    class Meta:
+        model = EquipmentStock
+        fields = ['item', 'quantity', 'available']
+
+class BorrowItemSerializer(serializers.Serializer):
+    item_id = serializers.IntegerField()
+    quantity = serializers.IntegerField()
+
+class ReturnItemSerializer(serializers.Serializer):
+    item_id = serializers.IntegerField()
+    quantity = serializers.IntegerField()
 
 
 class BorrowQueueSerializer(serializers.ModelSerializer):
