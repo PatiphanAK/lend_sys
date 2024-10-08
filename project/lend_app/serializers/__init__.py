@@ -1,3 +1,4 @@
-from approver_serializers import ApproverListSerializer
-from borrower_serializers import BorrowerListSerializer
-from other_serializers import *
+from .user_serializers import *
+from .other_serializers import *
+from .approver_serializers import *
+from .borrower_serializers import *

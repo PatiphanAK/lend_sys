@@ -31,13 +31,21 @@ class ApproverListSerializer(serializers.ModelSerializer):
         model = Approver
         fields = ('id', 'profile_image', 'description', 'user')
 
-
-class ItemSerializer(serializers.ModelSerializer):
+class ItemSerializerforSeacrh(serializers.ModelSerializer):
     categories = CategorySerializer(many=True)
 
     class Meta:
         model = Item
         fields = '__all__'
+
+
+class ItemSerializer(serializers.ModelSerializer):
+    categories = serializers.PrimaryKeyRelatedField(many=True, queryset=Category.objects.all())
+
+    class Meta:
+        model = Item
+        fields = '__all__'
+
 
 
 class CategorySerializer(serializers.ModelSerializer):
