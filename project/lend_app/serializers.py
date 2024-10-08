@@ -53,14 +53,15 @@ class BorrowerSerializer(serializers.ModelSerializer):
             'last_name': validated_data.pop('last_name'),
             'password': validated_data.pop('password'),
         }
-        
+
         user_serializer = UserSerializer(data=user_data)
-        user_serializer.is_valid(raise_exception=True)  # Raise an error if the user data is invalid
+        # Raise an error if the user data is invalid
+        user_serializer.is_valid(raise_exception=True)
         user = user_serializer.save()  # Create the user
-        
+
         # Create the borrower
         borrower = Borrower.objects.create(user=user, **validated_data)
-        
+
         # Add user to Borrower group
         borrower_group, created = Group.objects.get_or_create(name='Borrower')
         user.groups.add(borrower_group)
@@ -82,11 +83,13 @@ class ApproverSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(write_only=True)
     first_name = serializers.CharField(write_only=True)
     last_name = serializers.CharField(write_only=True)
-    organization = serializers.PrimaryKeyRelatedField(queryset=Organization.objects.all())
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all())
 
     class Meta:
         model = Approver
-        fields = ('id', 'description', 'profile_image', 'username', 'email', 'first_name', 'last_name', 'password', 'organization')
+        fields = ('id', 'description', 'profile_image', 'username',
+                  'email', 'first_name', 'last_name', 'password', 'organization')
 
     def create(self, validated_data):
         # Use UserSerializer to create a user
@@ -97,11 +100,12 @@ class ApproverSerializer(serializers.ModelSerializer):
             'last_name': validated_data.pop('last_name'),
             'password': validated_data.pop('password'),
         }
-        
+
         user_serializer = UserSerializer(data=user_data)
-        user_serializer.is_valid(raise_exception=True)  # Raise an error if the user data is invalid
+        # Raise an error if the user data is invalid
+        user_serializer.is_valid(raise_exception=True)
         user = user_serializer.save()  # Create the user
-        
+
         # Create the approver
         approver = Approver.objects.create(user=user, **validated_data)
 
@@ -110,16 +114,28 @@ class ApproverSerializer(serializers.ModelSerializer):
         user.groups.add(approver_group)
         return approver
 
+
 class ApproverListSerializer(serializers.ModelSerializer):
     user = UserSerializer()  # Nested serializer เพื่อรวมข้อมูล User
+
     class Meta:
         model = Approver
         fields = ('id', 'profile_image', 'description', 'user')
 
+
 class ItemSerializer(serializers.ModelSerializer):
+    categories = CategorySerializer(many=True)
+
     class Meta:
         model = Item
         fields = '__all__'
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name']
+
 
 class EquipmentStockDetailSerializer(serializers.ModelSerializer):
     item = ItemSerializer()  # รวม serializer ของ Item

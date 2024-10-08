@@ -1,6 +1,12 @@
-from .models import Item, EquipmentStock
-from .serializers import ItemSerializer, EquipmentStockSerializer, EquipmentStockDetailSerializer
+from lend_app.models import Item, EquipmentStock
+from lend_app.serializers import ItemSerializer, EquipmentStockSerializer, EquipmentStockDetailSerializer
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework import generics
+from lend_app.filters import EquipmentStockFilter
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter
+
+
 class ListItemView(generics.ListAPIView):
     queryset = Item.objects.all()
     serializer_class = ItemSerializer

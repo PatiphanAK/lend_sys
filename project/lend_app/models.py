@@ -60,7 +60,7 @@ class Approver(models.Model):
 class Item(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
-    category = models.ManyToManyField(
+    categories = models.ManyToManyField(
         Category, related_name='items')
     item_image = models.ImageField(
         upload_to='item_images/', blank=True, null=True)  # เพิ่มฟิลด์ item_image

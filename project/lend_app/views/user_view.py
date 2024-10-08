@@ -2,8 +2,8 @@ from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from .models import Borrower, Approver
-from .serializers import BorrowerListSerializer, BorrowerSerializer, ApproverSerializer, ApproverListSerializer
+from lend_app.models import Borrower, Approver
+from lend_app.serializers import BorrowerListSerializer, BorrowerSerializer, ApproverSerializer, ApproverListSerializer
 
 # Borrower List View
 class BorrowerListView(generics.ListAPIView):
