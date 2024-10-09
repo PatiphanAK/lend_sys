@@ -212,26 +212,32 @@ class BorrowQueueSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         equipment_stock = validated_data['equipment_stock']
         quantity = validated_data['quantity']
+        borrower = validated_data['borrower']
 
         # ตรวจสอบว่าของในคลังเพียงพอหรือไม่
         if equipment_stock.available >= quantity:
             # สร้าง BorrowRequest อัตโนมัติ
             borrow_request = BorrowRequest.objects.create(
                 equipment_stock=equipment_stock,
-                borrower=validated_data['borrower'],
+                borrower=borrower,
                 quantity=quantity,
                 status='PENDING'
             )
             # อัปเดต available ใน EquipmentStock
             equipment_stock.available -= quantity
             equipment_stock.save()
+
+            # ลบ BorrowQueue ที่เกี่ยวข้อง
+            related_queues = BorrowQueue.objects.filter(equipment_stock=equipment_stock, borrower=borrower)
+            if related_queues.exists():
+                related_queues.delete()
             return borrow_request
         else:
             # สร้าง BorrowQueue
             queue_position = BorrowQueue.objects.filter(equipment_stock=equipment_stock).count() + 1
             borrow_queue = BorrowQueue.objects.create(
                 equipment_stock=equipment_stock,
-                borrower=validated_data['borrower'],
+                borrower=borrower,
                 queue_position=queue_position,
                 quantity=quantity
             )

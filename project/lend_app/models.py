@@ -1,7 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User, Group
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+from django.contrib.auth.models import User
 
 # หน่วยงานที่มีอุปกรณ์ให้ยืม
 
@@ -29,13 +27,26 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+
+def borwer_image_path(instance, filename):
+    rename_fielname = f'{instance.user.username}{filename}'
+    return f'borrower_images/{rename_fielname}'
+
+def approver_image_path(instance, filename):
+    rename_fielname = f'{instance.user.username}{filename}'
+    return f'approver_images/{rename_fielname}'
+
+def item_image_path(instance, filename):
+    rename_fielname = f'{instance.name}{filename}'
+    return f'item_images/{rename_fielname}'
+
+
 # ผู้ยืม
 
 
 class Borrower(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    profile_image = models.ImageField(
-        upload_to='borrower_images/', null=True, blank=True)
+    profile_image = models.ImageField(upload_to=borwer_image_path, null=True, blank=True)
     description = models.TextField(blank=True)
 
     def __str__(self):
@@ -48,8 +59,7 @@ class Borrower(models.Model):
 class Approver(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     description = models.TextField(blank=True)
-    profile_image = models.ImageField(
-        upload_to='approver_images/', null=True, blank=True)
+    profile_image = models.ImageField(upload_to=approver_image_path, null=True, blank=True)
     organization = models.ForeignKey(
         Organization, on_delete=models.PROTECT, null=True, blank=True)
 
@@ -64,8 +74,7 @@ class Item(models.Model):
     description = models.TextField(blank=True)
     categories = models.ManyToManyField(
         Category, related_name='items')
-    item_image = models.ImageField(
-        upload_to='item_images/', blank=True, null=True)  # เพิ่มฟิลด์ item_image
+    item_image = models.ImageField(upload_to=item_image_path, null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -104,6 +113,7 @@ class BorrowRequest(models.Model):
     return_date = models.DateField(null=True, blank=True)
 
 
+
 # ต่อคิวยืมของ
 
 
@@ -121,32 +131,3 @@ class BorrowQueue(models.Model):
                 fields=['equipment_stock', 'queue_position'], name='unique_queue_position'
             )
         ]
-
-    def process_queue(self):
-        if self.equipment_stock.available >= self.quantity:
-            # สร้าง BorrowRequest อัตโนมัติ
-            BorrowRequest.objects.create(
-                equipment_stock=self.equipment_stock,
-                borrower=self.borrower,
-                quantity=self.quantity,
-                status='PENDING'
-            )
-            # อัปเดต available ใน EquipmentStock
-            self.equipment_stock.available -= self.quantity
-            self.equipment_stock.save()
-            
-            # ลบคิวนี้ออก
-            self.delete()
-
-            # อัปเดต queue_position สำหรับรายการที่เหลือ
-            remaining_queue = BorrowQueue.objects.filter(
-                equipment_stock=self.equipment_stock
-            ).order_by('queue_position')
-
-            for index, item in enumerate(remaining_queue, start=1):
-                item.queue_position = index
-                item.save()
-
-@receiver(post_save, sender=BorrowQueue)
-def handle_borrow_queue(sender, instance, **kwargs):
-    instance.process_queue()
