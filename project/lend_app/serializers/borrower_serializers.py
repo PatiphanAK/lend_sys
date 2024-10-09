@@ -10,7 +10,7 @@ class BorrowerSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(write_only=True)
     first_name = serializers.CharField(write_only=True)
     last_name = serializers.CharField(write_only=True)
-    profile_image = serializers.URLField(required=False, allow_null=True)
+    profile_image = serializers.ImageField(required=False, allow_null=True)  # เปลี่ยนจาก URLField เป็น ImageField
 
     class Meta:
         model = Borrower

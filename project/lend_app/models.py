@@ -29,15 +29,15 @@ class Category(models.Model):
 
 
 def borwer_image_path(instance, filename):
-    rename_fielname = f'{instance.user.username}{filename}'
+    rename_fielname = f'{instance.user.username}'
     return f'borrower_images/{rename_fielname}'
 
 def approver_image_path(instance, filename):
-    rename_fielname = f'{instance.user.username}{filename}'
+    rename_fielname = f'{instance.user.username}'
     return f'approver_images/{rename_fielname}'
 
 def item_image_path(instance, filename):
-    rename_fielname = f'{instance.name}{filename}'
+    rename_fielname = f'{instance.name}'
     return f'item_images/{rename_fielname}'
 
 
