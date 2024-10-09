@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User, Group
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 # หน่วยงานที่มีอุปกรณ์ให้ยืม
 
@@ -102,22 +104,49 @@ class BorrowRequest(models.Model):
     return_date = models.DateField(null=True, blank=True)
 
 
-
 # ต่อคิวยืมของ
 
 
 class BorrowQueue(models.Model):
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    equipment_stock = models.ForeignKey(
+        EquipmentStock, on_delete=models.CASCADE)
     borrower = models.ForeignKey(Borrower, on_delete=models.CASCADE)
     queue_position = models.PositiveIntegerField()
     request_date = models.DateField(auto_now_add=True)
+    quantity = models.PositiveIntegerField()
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['item', 'queue_position'], name='unique_queue_position'
+                fields=['equipment_stock', 'queue_position'], name='unique_queue_position'
             )
         ]
 
-    def __str__(self):
-        return f'{self.borrower.name} is in queue for {self.item.name} at position {self.queue_position}'
+    def process_queue(self):
+        if self.equipment_stock.available >= self.quantity:
+            # สร้าง BorrowRequest อัตโนมัติ
+            BorrowRequest.objects.create(
+                equipment_stock=self.equipment_stock,
+                borrower=self.borrower,
+                quantity=self.quantity,
+                status='PENDING'
+            )
+            # อัปเดต available ใน EquipmentStock
+            self.equipment_stock.available -= self.quantity
+            self.equipment_stock.save()
+            
+            # ลบคิวนี้ออก
+            self.delete()
+
+            # อัปเดต queue_position สำหรับรายการที่เหลือ
+            remaining_queue = BorrowQueue.objects.filter(
+                equipment_stock=self.equipment_stock
+            ).order_by('queue_position')
+
+            for index, item in enumerate(remaining_queue, start=1):
+                item.queue_position = index
+                item.save()
+
+@receiver(post_save, sender=BorrowQueue)
+def handle_borrow_queue(sender, instance, **kwargs):
+    instance.process_queue()

@@ -2,9 +2,6 @@ from rest_framework import serializers
 from ..models import Organization, Category, Borrower, Approver, Item, EquipmentStock, BorrowQueue, BorrowRequest
 from django.utils import timezone
 from .user_serializers import UserSerializer
-import jwt
-SECRET_KEY = "django-insecure-p^2i3^s$*awxqmdcv7w5yu3+eyb(m#fn6*)h&r359*g=9-b8*c"
-
 
 class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -170,6 +167,14 @@ class BorrowRequestSerializer(serializers.ModelSerializer):
 
         return attrs
 
+    def update(self, instance, validated_data):
+        if validated_data.get('status') == 'RETURNED':
+            instance.equipment_stock.available += instance.quantity
+            instance.equipment_stock.save()
+            # ตรวจสอบและประมวลผลคิว
+            BorrowQueue.objects.filter(equipment_stock=instance.equipment_stock).order_by('queue_position').first().process_queue()
+        return super().update(instance, validated_data)
+
     def create(self, validated_data):
         request = self.context.get('request')
         if not request:
@@ -203,3 +208,31 @@ class BorrowQueueSerializer(serializers.ModelSerializer):
     class Meta:
         model = BorrowQueue
         fields = '__all__'
+
+    def create(self, validated_data):
+        equipment_stock = validated_data['equipment_stock']
+        quantity = validated_data['quantity']
+
+        # ตรวจสอบว่าของในคลังเพียงพอหรือไม่
+        if equipment_stock.available >= quantity:
+            # สร้าง BorrowRequest อัตโนมัติ
+            borrow_request = BorrowRequest.objects.create(
+                equipment_stock=equipment_stock,
+                borrower=validated_data['borrower'],
+                quantity=quantity,
+                status='PENDING'
+            )
+            # อัปเดต available ใน EquipmentStock
+            equipment_stock.available -= quantity
+            equipment_stock.save()
+            return borrow_request
+        else:
+            # สร้าง BorrowQueue
+            queue_position = BorrowQueue.objects.filter(equipment_stock=equipment_stock).count() + 1
+            borrow_queue = BorrowQueue.objects.create(
+                equipment_stock=equipment_stock,
+                borrower=validated_data['borrower'],
+                queue_position=queue_position,
+                quantity=quantity
+            )
+            return borrow_queue

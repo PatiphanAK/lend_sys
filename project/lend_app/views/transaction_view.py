@@ -1,8 +1,8 @@
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from lend_app.models import BorrowRequest, Approver, Borrower
-from lend_app.serializers import BorrowRequestSerializer
+from lend_app.models import BorrowRequest, Borrower
+from lend_app.serializers import BorrowRequestSerializer, BorrowQueueSerializer
 from lend_app.permissions import IsApproverInOrganization, IsOwner
 from rest_framework import serializers
 from django.utils import timezone
@@ -203,3 +203,10 @@ class RejectedRequestListView(generics.ListAPIView):
 
     def get_queryset(self):
         return get_queryset_for_organization(self.request.user).filter(status='REJECTED')
+
+class BorrowQueueCreateView(generics.CreateAPIView):
+    serializer_class = BorrowQueueSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(borrower=self.request.user.borrower)
