@@ -8,10 +8,28 @@ from lend_app.serializers.other_serializers import ItemSerializer, EquipmentStoc
 from lend_app.permissions import IsApprover, IsApproverInOrganization
 
 # List Item View
-class ListItemView(generics.ListAPIView):
-    queryset = Item.objects.all()
-    serializer_class = ItemSerializer
-    permission_classes = [AllowAny]  # ให้ทุกคนเข้าถึงได้
+class ItemsListCreateView(APIView):
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        elif self.request.method == 'POST':
+            return [IsAuthenticated(), IsApprover()]
+        return super().get_permissions()
+    
+    def get(self, request):
+        items = Item.objects.all()
+        serializer = ItemSerializer(items, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request):
+        serializer = ItemSerializer(data=request.data)
+        if serializer.is_valid():
+            item = serializer.save()
+            return Response({
+                'message': 'Item created successfully',
+                'item': ItemSerializer(item).data
+            }, status=status.HTTP_201_CREATED)
+
 
 # Item Detail View
 class ItemDetailView(generics.RetrieveAPIView):

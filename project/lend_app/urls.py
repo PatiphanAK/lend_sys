@@ -1,8 +1,8 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import (
-    BorrowerListView, BorrowerRegisterView, ApproverListView, ApproverRegisterView,
-    ListItemView, ItemDetailView, CreateItemView, SearchEquipmentStockListView,
+    BorrowerListCreateView, ApproverListCreateView,
+    ItemsListCreateView, ItemDetailView, SearchEquipmentStockListView,
     BorrowRequestListView, BorrowRequestDetailView,
     HistoryBorrowRequestForBorrower, HistoryBorrowRequestForApprover,
     WaitingForApproveRequestListView, WaitingForReturnRequestListView,
@@ -14,14 +14,13 @@ from .views import (
 
 
 urlpatterns = [
-    path('borrowers/', BorrowerListView.as_view(), name='borrower-list'),
-    path('approvers/', ApproverListView.as_view(), name='approver-list'),
-    path('borrowers/register/', BorrowerRegisterView.as_view(),
-         name='borrower-register'),
-    path('approvers/register/', ApproverRegisterView.as_view(),
-         name='borrower-register'),
-    path('items/', ListItemView.as_view(), name='item-list'),
-    path('items/create/', CreateItemView.as_view(), name='item-create'),
+    # URLs สำหรับ Borrower และ Approver ดู User ได้ทั้งหมด, สร้าง User ได้ทั้งหมด
+    path('borrowers/', BorrowerListCreateView.as_view(), name='borrower-list-create'),
+    path('approvers/', ApproverListCreateView.as_view(), name='approver-list-create'),
+
+
+    # URLs สำหรับ Equipment Item
+    path('items/', ItemsListCreateView.as_view(), name='item-list-create'),
     path('items/<int:pk>/', ItemDetailView.as_view(), name='item-detail'),
     path('items/search/', SearchEquipmentStockListView.as_view(),
          name='search-item-list'),
