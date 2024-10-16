@@ -1,7 +1,7 @@
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from lend_app.models import Borrower, Approver
 from lend_app.serializers import BorrowerListSerializer, BorrowerSerializer, ApproverSerializer, ApproverListSerializer
 
@@ -43,3 +43,32 @@ class ApproverListCreateView(APIView):
             })
         return Response(serializer.errors)
 
+#UserDeatialView
+class UserDetailView(APIView):
+    permission_classes = [IsAuthenticated]  # บังคับให้ต้องล็อกอิน
+
+    def get(self, request):
+        user = request.user  # ดึงข้อมูลผู้ใช้ที่ทำการล็อกอิน
+        return Response({
+            'id': user.id,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+        })
+    
+class BorrowerIDView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        borrower = Borrower.objects.get(user_id=request.user.id)
+        return Response({
+            'id': borrower.id,
+        })
+
+class ApproverIDView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        approver = Approver.objects.get(user_id=request.user.id)
+        return Response({
+            'id': approver.id,
+        })

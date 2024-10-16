@@ -1,7 +1,8 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import (
-    BorrowerListCreateView, ApproverListCreateView,
+    CategoriesView,BorrowerIDView, ApproverIDView,
+    BorrowerListCreateView, ApproverListCreateView,UserDetailView,
     ItemsListCreateView, ItemDetailView, SearchEquipmentStockListView,
     BorrowRequestListView, BorrowRequestDetailView,
     HistoryBorrowRequestForBorrower, HistoryBorrowRequestForApprover,
@@ -17,14 +18,21 @@ urlpatterns = [
     # URLs สำหรับ Borrower และ Approver ดู User ได้ทั้งหมด, สร้าง User ได้ทั้งหมด
     path('borrowers/', BorrowerListCreateView.as_view(), name='borrower-list-create'),
     path('approvers/', ApproverListCreateView.as_view(), name='approver-list-create'),
+    path('user/', UserDetailView.as_view(), name='user-detail'),
 
+
+    # URLs สำหรับ User request เพื่อดู Borrower และ Approver ID ของตัวเอง และ Organization ID ของตัวเอง
+     path('borrowers-id/', BorrowerIDView.as_view(), name='borrower-id'),
+     path('approvers-id/', ApproverIDView.as_view(), name='approver-id'),
 
     # URLs สำหรับ Equipment Item
     path('items/', ItemsListCreateView.as_view(), name='item-list-create'),
     path('items/<int:pk>/', ItemDetailView.as_view(), name='item-detail'),
     path('items/search/', SearchEquipmentStockListView.as_view(),
          name='search-item-list'),
-
+     
+     #URL Category
+     path('categories/', CategoriesView.as_view(), name='category-list'),
     # URL สำหรับการจัดการคำขอยืม
     path('borrow-requests/', BorrowRequestListView.as_view(),
          name='borrow-request-list'),

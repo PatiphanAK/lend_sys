@@ -29,7 +29,9 @@ class ItemsListCreateView(APIView):
                 'message': 'Item created successfully',
                 'item': ItemSerializer(item).data
             }, status=status.HTTP_201_CREATED)
-
+        
+        # ส่งกลับข้อผิดพลาดเมื่อข้อมูลไม่ valid
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # Item Detail View
 class ItemDetailView(generics.RetrieveAPIView):
