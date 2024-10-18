@@ -10,7 +10,7 @@ class BorrowerSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(write_only=True)
     first_name = serializers.CharField(write_only=True)
     last_name = serializers.CharField(write_only=True)
-    profile_image = serializers.ImageField(required=False, allow_null=True)  # เปลี่ยนจาก URLField เป็น ImageField
+    profile_image = serializers.ImageField(required=False, allow_null=True) 
 
     class Meta:
         model = Borrower
@@ -52,9 +52,30 @@ class BorrowerSerializer(serializers.ModelSerializer):
         return borrower
 
 
-class BorrowerListSerializer(serializers.ModelSerializer):
-    user = UserSerializer()  # Nested serializer เพื่อรวมข้อมูล User
+class BorrowerUpdateSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(write_only=True)
+    email = serializers.EmailField(write_only=True)
+    first_name = serializers.CharField(write_only=True)
+    last_name = serializers.CharField(write_only=True)
+    profile_image = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Borrower
-        fields = ('id', 'profile_image', 'description', 'user')
+        fields = ('id', 'profile_image', 'description',
+                  'username', 'email', 'first_name', 'last_name')
+
+    def update(self, instance, validated_data):
+        # Update the user
+        user = instance.user
+        user.username = validated_data.get('username', user.username)
+        user.email = validated_data.get('email', user.email)
+        user.first_name = validated_data.get('first_name', user.first_name)
+        user.last_name = validated_data.get('last_name', user.last_name)
+        user.save()
+
+        # Update the borrower
+        instance.profile_image = validated_data.get('profile_image', instance.profile_image)
+        instance.description = validated_data.get('description', instance.description)
+        instance.save()
+
+        return instance

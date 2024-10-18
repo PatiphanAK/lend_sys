@@ -51,7 +51,7 @@ class SearchEquipmentStockListView(generics.ListAPIView):
     permission_classes = [AllowAny]  # ให้ทุกคนเข้าถึงได้
 
     def get_queryset(self):
-        query = self.request.query_params.get('q', None)
+        query = self.request.query_params.get('item', None)
         organization = self.request.query_params.get('organization', None)
         
         if query and organization:
@@ -84,8 +84,7 @@ class CreateEquipmentStockView(generics.CreateAPIView):
 
 # Assign Item to Stock View
 class AssignItemToStockView(APIView):
-    permission_classes = [IsAuthenticated, IsApproverInOrganization]  # ต้องการการยืนยันตัวตนและเป็น Approver ในองค์กร
-
+    permission_classes = [IsAuthenticated, IsApproverInOrganization, IsApprover]  # ต้องการการยืนยันตัวตนและเป็น Approver ในองค์กร
     def post(self, request, *args, **kwargs):
         serializer = AssignItemToStockSerializer(data=request.data)
         if serializer.is_valid():

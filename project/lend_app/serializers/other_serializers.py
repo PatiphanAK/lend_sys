@@ -28,7 +28,7 @@ class ApproverListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Approver
-        fields = ('id', 'profile_image', 'description', 'user')
+        fields = '__all__'
 
 
 class ItemSerializer(serializers.ModelSerializer):
@@ -182,11 +182,9 @@ class BorrowRequestSerializer(serializers.ModelSerializer):
 
         borrower = Borrower.objects.get(user=request.user)
         validated_data['borrower'] = borrower
-
-        approver = Approver.objects.get(user=request.user)
-        validated_data['approver'] = approver
-
+        
         return super().create(validated_data)
+    
 
 class OrganizationStockSerializer(serializers.ModelSerializer):
     item = ItemSerializer(read_only=True)

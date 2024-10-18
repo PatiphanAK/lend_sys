@@ -50,3 +50,33 @@ class ApproverSerializer(serializers.ModelSerializer):
         approver_group, created = Group.objects.get_or_create(name='Approver')
         user.groups.add(approver_group)
         return approver
+
+class ApproverUpdateSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(write_only=True)
+    email = serializers.EmailField(write_only=True)
+    first_name = serializers.CharField(write_only=True)
+    last_name = serializers.CharField(write_only=True)
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all())
+
+    class Meta:
+        model = Approver
+        fields = ('id', 'description', 'profile_image', 'username',
+                  'email', 'first_name', 'last_name', 'organization')
+
+    def update(self, instance, validated_data):
+        user_data = {
+            'username': validated_data.pop('username'),
+            'email': validated_data.pop('email'),
+            'first_name': validated_data.pop('first_name'),
+            'last_name': validated_data.pop('last_name'),
+        }
+
+        user_serializer = UserSerializer()
+        user = user_serializer.update(instance.user, user_data)
+
+        instance.organization = validated_data.get('organization', instance.organization)
+        instance.description = validated_data.get('description', instance.description)
+        instance.profile_image = validated_data.get('profile_image', instance.profile_image)
+        instance.save()
+        return instance
