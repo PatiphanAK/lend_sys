@@ -13,3 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
         # Hash the password before saving
         validated_data['password'] = make_password(validated_data['password'])
         return super().create(validated_data)
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField()
+    new_password = serializers.CharField()

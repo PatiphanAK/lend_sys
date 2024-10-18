@@ -110,6 +110,7 @@ class BorrowRequest(models.Model):
     status = models.CharField(
         max_length=10, choices=STATUS_CHOICES, default='PENDING')
     borrow_date = models.DateField(auto_now_add=True)
+    
     return_date = models.DateField(null=True, blank=True)
 
 
