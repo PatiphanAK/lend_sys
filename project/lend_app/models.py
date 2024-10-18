@@ -101,15 +101,13 @@ class BorrowRequest(models.Model):
         ('RETURNED', 'Returned'),
     )
 
-    borrower = models.ForeignKey(
-        Borrower, on_delete=models.SET_NULL, null=True)
-    equipment_stock = models.ForeignKey(
-        EquipmentStock, on_delete=models.CASCADE)
+    borrower = models.ForeignKey(Borrower, on_delete=models.SET_NULL, null=True)
+    equipment_stock = models.ForeignKey(EquipmentStock, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     approver = models.ForeignKey(Approver, on_delete=models.PROTECT, null=True, blank=True)
-    status = models.CharField(
-        max_length=10, choices=STATUS_CHOICES, default='PENDING')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
     borrow_date = models.DateField(auto_now_add=True)
+    expected_return_date = models.DateField()
     return_date = models.DateField(null=True, blank=True)
 
 
