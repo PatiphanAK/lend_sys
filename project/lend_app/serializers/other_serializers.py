@@ -124,6 +124,7 @@ class BorrowRequestSerializer(serializers.ModelSerializer):
         borrower = attrs.get('borrower')
 
         borrow_date = attrs.get('borrow_date')
+        expected_return_date = attrs.get('expected_return_date')
         return_date = attrs.get('return_date')
         status = attrs.get('status')
 
@@ -141,7 +142,21 @@ class BorrowRequestSerializer(serializers.ModelSerializer):
                 "Borrow date must not be in the past.",
                 code='invalid_borrow_date'
             )
-
+        
+        #Validate expected return date is not in the past
+        if expected_return_date and expected_return_date < timezone.now().date():
+            raise serializers.ValidationError(
+                "Expected return date must not be in the past.",
+                code='invalid_expected_return_date'
+            )
+        # Validate expected return date is after the borrow date
+        if expected_return_date and borrow_date:
+            if expected_return_date < borrow_date:
+                raise serializers.ValidationError(
+                    "Expected return date must be after the borrow date.",
+                    code='invalid_date_range'
+                )
+            
         # Validate return date is not in the past
         if return_date and return_date < timezone.now().date():
             raise serializers.ValidationError(
