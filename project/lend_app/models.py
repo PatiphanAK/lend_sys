@@ -30,15 +30,18 @@ class Category(models.Model):
 
 def borwer_image_path(instance, filename):
     rename_fielname = f'{instance.user.username}'
-    return f'borrower_images/{rename_fielname}'
+    file_extension = filename.split('.')[-1]
+    return f'borrower_images/{rename_fielname}.{file_extension}'
 
 def approver_image_path(instance, filename):
     rename_fielname = f'{instance.user.username}'
-    return f'approver_images/{rename_fielname}'
+    file_extension = filename.split('.')[-1]
+    return f'approver_images/{rename_fielname}.{file_extension}'
 
 def item_image_path(instance, filename):
     rename_fielname = f'{instance.name}'
-    return f'item_images/{rename_fielname}'
+    file_extension = filename.split('.')[-1]
+    return f'item_images/{rename_fielname}.{file_extension}'
 
 
 # ผู้ยืม

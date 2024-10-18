@@ -134,9 +134,9 @@ class UserProfileView(APIView):
         borrower = Borrower.objects.filter(user=user).first()
 
         if approver:
-            serializer = ApproverUpdateSerializer(approver)
+            serializer = ApproverListSerializer(approver)
         elif borrower:
-            serializer = BorrowerUpdateSerializer(borrower)
+            serializer = BorrowerListSerializer(borrower)
         else:
             return Response({'message': 'User not found both Approver and Borrower'}, status=404)
         return Response(serializer.data)
