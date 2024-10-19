@@ -23,6 +23,7 @@ class ItemsListCreateView(APIView):
     
     def post(self, request):
         serializer = ItemSerializer(data=request.data)
+        print("Request data:", request.data)
         if serializer.is_valid():
             item = serializer.save()
             return Response({
@@ -76,11 +77,11 @@ class EquipmentStockDetailView(generics.RetrieveAPIView):
     serializer_class = EquipmentStockSerializer
     permission_classes = [AllowAny]  # ให้ทุกคนเข้าถึงได้
 
-# Create Equipment Stock View
-class CreateEquipmentStockView(generics.CreateAPIView):
-    queryset = EquipmentStock.objects.all()
-    serializer_class = EquipmentStockSerializer
-    permission_classes = [IsAuthenticated, IsApproverInOrganization]  # ต้องการการยืนยันตัวตนและเป็น Approver ในองค์กร
+# # Create Equipment Stock View
+# class CreateEquipmentStockView(generics.CreateAPIView):
+#     queryset = EquipmentStock.objects.all()
+#     serializer_class = EquipmentStockSerializer
+#     permission_classes = [IsAuthenticated, IsApproverInOrganization]  # ต้องการการยืนยันตัวตนและเป็น Approver ในองค์กร
 
 # Assign Item to Stock View
 class AssignItemToStockView(APIView):

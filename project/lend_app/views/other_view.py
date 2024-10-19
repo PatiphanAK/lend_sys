@@ -1,8 +1,9 @@
 from rest_framework.views import APIView
-from lend_app.serializers import CategorySerializer
+from lend_app.serializers import CategorySerializer, OrganizationListForRegister
 from rest_framework.permissions import AllowAny
-from lend_app.models import Category
+from lend_app.models import Category, Organization
 from rest_framework.response import Response
+from rest_framework import generics
 # Category List View
 class CategoriesView(APIView):
     serializer_class = CategorySerializer
@@ -12,3 +13,8 @@ class CategoriesView(APIView):
         categories = Category.objects.all()
         serializer = CategorySerializer(categories, many=True)
         return Response(serializer.data)
+
+class OrganizationListForRegister(generics.ListCreateAPIView):
+    queryset = Organization.objects.all()
+    serializer_class = OrganizationListForRegister
+    permission_classes = [AllowAny]

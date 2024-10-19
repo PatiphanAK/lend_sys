@@ -11,7 +11,7 @@ class BorrowerListCreateView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
         borrowers = Borrower.objects.all()
-        serializer = BorrowerListSerializer(borrowers, many=True)
+        serializer = BorrowerSerializer(borrowers, many=True)
         return Response(serializer.data)
     
     def post(self, request):
@@ -30,7 +30,7 @@ class ApproverListCreateView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
         approvers = Approver.objects.all()
-        serializer = ApproverListSerializer(approvers, many=True)
+        serializer = ApproverSerializer(approvers, many=True)
         return Response(serializer.data)
     
     def post(self, request):

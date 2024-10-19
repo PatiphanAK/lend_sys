@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+import uuid
 # หน่วยงานที่มีอุปกรณ์ให้ยืม
 
 
@@ -39,9 +39,9 @@ def approver_image_path(instance, filename):
     return f'approver_images/{rename_fielname}.{file_extension}'
 
 def item_image_path(instance, filename):
-    rename_fielname = f'{instance.name}'
+    rename_filename = f'{instance.name}_{uuid.uuid4()}'  # หรือรวม timestamp
     file_extension = filename.split('.')[-1]
-    return f'item_images/{rename_fielname}.{file_extension}'
+    return f'item_images/{rename_filename}.{file_extension}'
 
 
 # ผู้ยืม

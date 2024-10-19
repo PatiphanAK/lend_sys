@@ -2,7 +2,7 @@ from rest_framework import serializers
 from ..models import Organization, Category, Borrower, Approver, Item, EquipmentStock, BorrowQueue, BorrowRequest
 from django.utils import timezone
 from .user_serializers import UserSerializer
-
+from django.conf import settings
 class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organization
@@ -17,25 +17,36 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class BorrowerListSerializer(serializers.ModelSerializer):
     user = UserSerializer()  # Nested serializer เพื่อรวมข้อมูล User
-
+    profile_image = serializers.SerializerMethodField()
     class Meta:
         model = Borrower
         fields = ('id', 'profile_image', 'description', 'user')
-
+    
+    def get_profile_image(self, obj):
+        if obj.profile_image:
+            return f"{settings.BASE_URL}media/{obj.profile_image}"
+        return None
 
 class ApproverListSerializer(serializers.ModelSerializer):
     user = UserSerializer()  # Nested serializer เพื่อรวมข้อมูล User
+    profile_image = serializers.SerializerMethodField()
 
     class Meta:
         model = Approver
         fields = '__all__'
-
+    
+    def get_profile_image(self, obj):
+        if obj.profile_image:
+            return f"{settings.BASE_URL}media/{obj.profile_image}"
+        return None
 
 class ItemSerializer(serializers.ModelSerializer):
+    item_image = serializers.ImageField(required=True)
+
     class Meta:
         model = Item
         fields = '__all__'
-
+    
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -44,7 +55,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class EquipmentStockSerializer(serializers.ModelSerializer):
-    item = serializers.StringRelatedField(read_only=True)
+    item = ItemSerializer(read_only=True)
     organization = serializers.StringRelatedField(read_only=True)
 
     class Meta:
@@ -255,3 +266,8 @@ class BorrowQueueSerializer(serializers.ModelSerializer):
                 quantity=quantity
             )
             return borrow_queue
+
+class OrganizationListForRegister(serializers.ModelSerializer):
+    class Meta:
+        model = Organization
+        fields = '__all__'
